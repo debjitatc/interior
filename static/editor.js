@@ -1,3 +1,128 @@
+// ─── SCROLL-DRIVEN HERO ──────────────────────────────────────────────────────
+const ScrollHero = {
+  FRAMES: 120,
+  TRIGGER_FRAME: 88,
+  images: [],
+  loaded: 0,
+  currentFrame: -1,
+  
+  init() {
+    this.canvas = document.getElementById('hero-canvas');
+    if (!this.canvas) return; // not on the page
+    this.ctx = this.canvas.getContext('2d');
+    this.scrollTrack = document.getElementById('scroll-track');
+    this.uploadCard = document.getElementById('upload-card');
+    this.topbar = document.querySelector('.topbar');
+    this.scrollIndicator = document.getElementById('scroll-indicator');
+    this.stage1 = document.getElementById('stage1');
+    
+    // Resize handler
+    window.addEventListener('resize', () => {
+      this.resize();
+      if (this.currentFrame > 0) this.render(this.currentFrame);
+    });
+    this.resize();
+    
+    // Preload frames
+    for (let i = 1; i <= this.FRAMES; i++) {
+      const img = new Image();
+      const frameNum = i.toString().padStart(3, '0');
+      img.src = `/static/gwr_frames/frame_${frameNum}.webp`;
+      img.onload = () => {
+        this.loaded++;
+        // If the frame we just loaded is the one we want to show, render it!
+        if (i === this.currentFrame || (i === 1 && this.currentFrame === -1)) {
+            this.currentFrame = i;
+            this.render(i);
+        }
+      };
+      this.images[i] = img;
+    }
+    
+    // Scroll handler
+    if (this.stage1) {
+      this.stage1.addEventListener('scroll', () => this.onScroll(), { passive: true });
+    }
+    this.onScroll();
+  },
+  
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  },
+  
+  onScroll() {
+    if (!this.scrollTrack || !this.stage1) return;
+    
+    const scrollY = this.stage1.scrollTop;
+    
+    // Hide scroll indicator once scrolled
+    if (scrollY > 50 && this.scrollIndicator) {
+      this.scrollIndicator.classList.add('hidden');
+    }
+    
+    // Topbar scrolled effect
+    if (scrollY > 10 && this.topbar) {
+      this.topbar.classList.add('scrolled');
+    } else if (this.topbar) {
+      this.topbar.classList.remove('scrolled');
+    }
+    
+    // Calculate progress
+    const maxScroll = this.scrollTrack.offsetHeight - this.stage1.clientHeight;
+    const clampedScroll = Math.max(0, Math.min(scrollY, maxScroll));
+    let progress = maxScroll > 0 ? clampedScroll / maxScroll : 0;
+    
+    // Frame calculation
+    let frame = Math.round(progress * (this.FRAMES - 1)) + 1;
+    frame = Math.max(1, Math.min(this.FRAMES, frame));
+    
+    if (frame !== this.currentFrame) {
+      this.render(frame);
+      this.currentFrame = frame;
+      
+      // Trigger upload card
+      if (this.uploadCard) {
+        if (frame >= this.TRIGGER_FRAME) {
+          this.uploadCard.classList.add('visible');
+        } else {
+          this.uploadCard.classList.remove('visible');
+        }
+      }
+    }
+  },
+  
+  render(frameIndex) {
+    const img = this.images[frameIndex];
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+    
+    // Draw with object-fit: cover equivalent
+    const canvasRatio = this.canvas.width / this.canvas.height;
+    const imgRatio = img.width / img.height;
+    
+    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+    
+    if (canvasRatio > imgRatio) {
+      drawWidth = this.canvas.width;
+      drawHeight = drawWidth / imgRatio;
+      offsetY = (this.canvas.height - drawHeight) / 2;
+    } else {
+      drawHeight = this.canvas.height;
+      drawWidth = drawHeight * imgRatio;
+      offsetX = (this.canvas.width - drawWidth) / 2;
+    }
+    
+    // Clear and draw
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+  }
+};
+
+// Initialize ScrollHero when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  ScrollHero.init();
+});
+
 // ─── Pin identity colours (for numbering pins on the photo) ──────────────────
 const COLORS = [
   '#FF6B6B','#4ECDC4','#FFE66D','#A8E6CF','#FF8B94',
