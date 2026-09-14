@@ -505,7 +505,7 @@ function updateMarkerList() {
       const sel = ((m.sticker && m.sticker.name === s.name) || (!m.sticker && s.name === 'None')) ? ' sel' : '';
       const dot = s.file
         ? `<span class="cs-dot cs-thumb" style="background-image:url('${STICKER_BASE}${s.file}')"></span>`
-        : `<span class="cs-dot cs-emoji">∅</span>`;
+        : `<span class="cs-dot cs-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>`;
       return `<button type="button" class="cs-opt${sel}" data-i="${i}" data-kind="sticker" data-sticker="${s.name}" data-file="${s.file}" data-desc="${s.desc}" title="${s.name}">
          ${dot}
          <span class="cs-name">${s.name}</span>
@@ -523,14 +523,14 @@ function updateMarkerList() {
       <div class="region-head">
         <span class="region-pin" style="background:${m.color}">${m.number}</span>
         <span class="region-title">Region ${m.number}</span>
-        <button class="del-btn" data-del="${i}" title="Delete">✕</button>
+        <button class="del-btn" data-del="${i}" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
       </div>
       <div class="surface-select">${surfaceBtns}</div>
       <div class="color-select" data-i="${i}">
         <button type="button" class="cs-btn" data-i="${i}">
           <span class="cs-dot cs-dot-sm" style="background:${fillSw};${m.fill?'':'border:1.5px dashed var(--border)'}"></span>
           <span class="cs-label">${fillLabel}</span>
-          <span class="cs-caret">▾</span>
+          <span class="cs-caret"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </button>
         <div class="cs-menu">
           <div class="cs-menu-title">Choose a colour</div>
@@ -541,7 +541,7 @@ function updateMarkerList() {
         <button type="button" class="cs-btn" data-i="${i}">
           ${stickerBtnDot}
           <span class="cs-label">${stickerLabel}</span>
-          <span class="cs-caret">▾</span>
+          <span class="cs-caret"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </button>
         <div class="cs-menu">
           <div class="cs-menu-title">Choose a wall design</div>
@@ -799,7 +799,7 @@ generateBtn.addEventListener('click', async () => {
     S.workingImage = out;
     showResult(out, `room_edit_r${region.number}.png`);
     refreshAnnotated();
-    showToast(`✨ Region ${region.number} updated!`, 'success');
+    showToast(`Region ${region.number} updated`, 'success');
   } catch(e) { hideGenAnim(); showToast('Generation failed: '+e.message, 'error'); resultPH.style.display='flex'; }
   finally { setLoading(generateBtn,false); viewFrame.classList.remove('busy'); }
 });
@@ -816,7 +816,7 @@ generateAllBtn.addEventListener('click', async () => {
     showResult(out, 'room_edit_all.png');
     refreshAnnotated();
     if (promptProgress) promptProgress.textContent = '';
-    showToast(`✨ Updated ${jobs.length} region${jobs.length>1?'s':''}!`, 'success');
+    showToast(`Updated ${jobs.length} region${jobs.length>1?'s':''}`, 'success');
   } catch(e) {
     hideGenAnim();
     showToast('Generation failed: '+e.message, 'error');
