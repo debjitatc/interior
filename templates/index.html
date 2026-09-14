@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>InteriorAI — Room Design Studio</title>
+  <meta name="description" content="AI-powered interior room design. Upload your room photo, mark surfaces, and redesign them instantly."/>
+  <link rel="stylesheet" href="/static/style.css?v={{ v }}"/>
+</head>
+<body>
+
+<!-- ① LOADER — plays once on open, then disappears -->
+<div id="loader-screen">
+  <video id="loader-video" src="/videos/loader.mp4" autoplay muted playsinline preload="auto"></video>
+</div>
+
+<!-- ② BACKGROUND — continuous translucent ambient video (lightweight, ~228KB) -->
+<video id="bg-video" src="/videos/bg-lite.mp4"
+       autoplay muted loop playsinline preload="auto"></video>
+
+
+
+<!-- ═══ TOP BAR ═══ -->
+<header class="topbar">
+  <div class="brand">
+    <img class="brand-logo" src="/assets/ATCeditlogo.jpg" alt="ATC Edit logo"/>
+    <div>
+      <div class="brand-name">InteriorAI</div>
+      <div class="brand-sub">Room Design Studio</div>
+    </div>
+  </div>
+  <nav class="stage-nav">
+    <div class="stage-step active" id="step1">
+      <div class="step-num">1</div><span class="step-label">Upload</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="stage-step" id="step2">
+      <div class="step-num">2</div><span class="step-label">Mask Regions</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="stage-step" id="step3">
+      <div class="step-num">3</div><span class="step-label">AI Edit</span>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═══════════════════════════════════════════
+     STAGE 1 — Upload
+═══════════════════════════════════════════ -->
+<div class="stage active" id="stage1">
+
+  <div class="s1-center">
+    <div class="upload-card">
+
+      <div class="uc-head">
+        <div class="hero-badge"><span class="pulse-dot"></span> AI Room Design Studio</div>
+        <div class="card-title">Upload your <span>room photo</span></div>
+        <p class="card-sub">Drop a photo, pin the surfaces you want to redesign, pick a colour or wall sticker — the AI does the rest, keeping everything else untouched.</p>
+      </div>
+
+      <div id="drop-zone">
+        <div class="dz-icon">🏠</div>
+        <h3>Drop your room image here</h3>
+        <p>PNG · JPG · WEBP &nbsp;·&nbsp; Max 20 MB</p>
+        <button class="btn btn-gold btn-lg" type="button" style="margin-top:1rem">Browse Files</button>
+      </div>
+      <input type="file" id="file-input" accept="image/*"/>
+
+      <div id="preview-wrap">
+        <img id="preview-img" alt="Room preview"/>
+        <button class="btn preview-change-btn" id="back-to-upload" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Change Photo
+        </button>
+      </div>
+
+      <div class="uc-actions">
+        <button class="btn btn-gold btn-block btn-lg" id="proceed-btn" style="display:none">
+          Proceed to Masking →
+        </button>
+      </div>
+
+      <div class="uc-features">
+        <div class="uc-feat"><span>🎯</span><span>Precise masking</span></div>
+        <div class="uc-sep"></div>
+        <div class="uc-feat"><span>🖼️</span><span>Reference styling</span></div>
+        <div class="uc-sep"></div>
+        <div class="uc-feat"><span>⚡</span><span>Photorealistic output</span></div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /stage1 -->
+
+
+<!-- ═══════════════════════════════════════════
+     STAGE 2 — Polygon Editor
+═══════════════════════════════════════════ -->
+<div class="stage" id="stage2">
+<div class="stage-shell">
+
+  <!-- top bar -->
+  <div class="s2-top">
+    <span class="s2-title">Tap surfaces to <span>add regions</span></span>
+    <div style="flex:1"></div>
+    <button class="btn btn-outline btn-sm" id="back-to-upload2">← Back</button>
+  </div>
+
+  <!-- body: canvas + sidebar -->
+  <div class="s2-body">
+
+    <div class="canvas-card">
+      <div id="canvas-container">
+        <img id="editor-img" alt="Room for editing"/>
+        <canvas id="editor-canvas"></canvas>
+
+        <!-- Floating toolbar — sits directly on the room photo -->
+        <div class="floating-toolbar">
+          <span class="ft-tip"><span class="ft-icon">＋</span> Click a surface to add a pin</span>
+          <span class="ft-sep"></span>
+          <button class="ft-btn" id="undo-btn">
+            <span class="ft-icon">↩</span> Undo
+          </button>
+          <button class="ft-btn ft-danger" id="clear-all-btn">
+            <span class="ft-icon">✕</span> Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="editor-sidebar">
+      <div class="sidebar-section" style="flex:1">
+        <span class="sidebar-label">Regions &amp; Colours</span>
+        <div id="poly-list"><p style="font-size:.78rem;color:var(--ink-muted);padding:.3rem 0">No points yet — click a surface to drop a numbered pin</p></div>
+      </div>
+
+
+    </aside>
+
+  </div><!-- /s2-body -->
+
+  <!-- bottom action bar -->
+  <div class="s2-bottom">
+    <span class="s2-bottom-hint">Drop a numbered pin on each surface you want to redesign, then choose a colour or sticker for it.</span>
+    <button class="btn btn-primary btn-cta" id="gen-mask-btn">
+      <span class="spinner"></span>
+      Confirm Surfaces &amp; Proceed →
+    </button>
+  </div>
+
+</div>
+</div><!-- /stage2 -->
+
+
+<!-- ═══════════════════════════════════════════
+     STAGE 3 — AI Edit
+═══════════════════════════════════════════ -->
+<div class="stage" id="stage3">
+<div class="stage-shell">
+
+  <!-- top bar -->
+  <div class="s2-top">
+    <span class="s2-title">AI <span>Room Editor</span></span>
+    <div style="flex:1"></div>
+    <button class="btn btn-outline btn-sm" id="back-to-editor">← Back to Editor</button>
+  </div>
+
+  <!-- body: controls + view -->
+  <div class="s3-body">
+
+    <!-- Left: control panel -->
+    <aside class="ai-panel">
+
+      <div class="ai-panel-section">
+        <span class="ai-panel-title">Your Regions</span>
+        <p class="region-count" id="region-count">No regions yet</p>
+        <div class="region-chips" id="region-chips"></div>
+        <p class="region-hint">Write all your changes in one box below, naming each region (e.g. "Region 2 …"), then hit <strong>Generate All Regions</strong>. Or pick one chip and use <strong>Generate This Region</strong>.</p>
+      </div>
+
+
+
+
+
+      <div class="ai-panel-section">
+        <button class="btn btn-gold btn-block btn-lg" id="generate-btn">
+          <span class="spinner"></span>
+          ✨ Generate This Region
+        </button>
+        <button class="btn btn-primary btn-block btn-lg" id="generate-all-btn">
+          <span class="spinner"></span>
+          ✨ Generate All Regions
+        </button>
+        <p class="region-hint" id="prompt-progress" style="text-align:center"></p>
+      </div>
+
+    </aside>
+
+    <!-- Right: image view -->
+    <section class="ai-view">
+      <div class="view-card">
+
+        <div class="stage-guide-banner">
+          <span>📍 <strong>Region <span id="active-region-num">1</span> selected</strong> &nbsp;—&nbsp; your picked colours &amp; stickers are applied. Hit <strong>✨ Generate</strong></span>
+        </div>
+
+        <div class="view-tabs">
+          <button class="tab-btn active" data-view="annotated">Regions Preview</button>
+          <button class="tab-btn" data-view="original">Original Room</button>
+          <button class="tab-btn" data-view="result" id="tab-result" disabled>✨ AI Result</button>
+          <button class="tab-btn" data-view="compare" id="tab-compare" disabled>⇄ Before / After</button>
+        </div>
+
+        <div class="view-frame" id="view-frame">
+          <img id="annotated-img" class="visible" alt="Annotated room"/>
+          <img id="original-img" alt="Original room"/>
+          <img id="output-img" alt="AI result"/>
+          <div class="compare" id="compare">
+            <img id="cmp-after" alt="After"/>
+            <img id="cmp-before" alt="Before"/>
+            <div class="cmp-divider" id="cmp-divider"><span class="cmp-handle">⇆</span></div>
+            <input type="range" min="0" max="100" value="50" id="cmp-range" class="cmp-range" aria-label="Before after slider"/>
+            <span class="cmp-tag cmp-tag-before">Before</span>
+            <span class="cmp-tag cmp-tag-after">After</span>
+          </div>
+          <div id="result-placeholder">
+            <div class="ph-icon">🖼️</div>
+            <div>Your edited room will appear here.<br/>Drop a pin, choose a colour or sticker, and hit Generate.</div>
+          </div>
+          <!-- Generate animation fills this card while the AI is running -->
+          <div id="gen-anim-overlay">
+            <video id="gen-anim-video" src="/videos/animation.mp4" muted playsinline preload="none" loop></video>
+            <p class="gen-anim-label">Generating your design…</p>
+          </div>
+        </div>
+
+        <div class="view-bottom" id="view-bottom">
+          <a class="btn btn-primary btn-sm" id="download-btn" download="room_edit.png">⬇ Download</a>
+          <button class="btn btn-outline btn-sm" id="edit-again-btn">↻ Edit Again</button>
+        </div>
+
+      </div>
+    </section>
+
+  </div><!-- /s3-body -->
+
+</div>
+</div><!-- /stage3 -->
+
+</main>
+
+<div id="toast"></div>
+<script src="/static/editor.js?v={{ v }}"></script>
+</body>
+</html>
